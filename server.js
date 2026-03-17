@@ -146,6 +146,97 @@ const requireAdmin = async (req, res, next) => {
     next();
 };
 
+// ============================================
+// MONGODB CONNECTION - FIXED VERSION
+// ============================================
+
+console.log('========================================');
+console.log('🚀 Starting Chat Application...');
+console.log('========================================');
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('❌❌❌ CRITICAL ERROR: MONGODB_URI is not defined in environment variables!');
+  console.error('❌❌❌ Please add MONGODB_URI to your Render environment variables.');
+  console.error('❌❌❌ The application will not work without a database connection.');
+} else {
+  // Hide password in logs for security
+  const sanitizedURI = MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
+  console.log('✅ MONGODB_URI found:', sanitizedURI);
+  
+  // Disable command buffering completely - THIS FIXES THE TIMEOUT ISSUE
+  mongoose.set('bufferCommands', false);
+  mongoose.set('bufferTimeoutMS', 10000);
+  
+  // Connection options
+  const connectionOptions = {
+    serverSelectionTimeoutMS: 15000, // Timeout after 15 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    connectTimeoutMS: 15000,
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    retryWrites: true,
+    retryReads: true,
+  };
+  
+  console.log('🔄 Attempting to connect to MongoDB Atlas...');
+  
+  // Connect to MongoDB
+  mongoose.connect(MONGODB_URI, connectionOptions)
+    .then(() => {
+      console.log('✅✅✅ SUCCESS! Connected to MongoDB Atlas! ✅✅✅');
+      console.log('📊 Database:', mongoose.connection.name);
+      console.log('🌐 Host:', mongoose.connection.host);
+      
+      // Initialize rooms after successful connection
+      initRooms().then(() => {
+        console.log('✅ Default rooms initialized');
+      }).catch(err => {
+        console.error('❌ Error initializing rooms:', err.message);
+      });
+    })
+    .catch(err => {
+      console.error('❌❌❌ MongoDB connection error ❌❌❌');
+      console.error('Error name:', err.name);
+      console.error('Error message:', err.message);
+      
+      // Check for common errors
+      if (err.message.includes('authentication failed')) {
+        console.error('🔑 AUTHENTICATION ERROR: Username or password is incorrect in MONGODB_URI');
+        console.error('🔑 Current username in URI: georgepalathens_db_user');
+        console.error('🔑 Make sure the password in the connection string matches exactly');
+        console.error('🔑 Password should NOT contain any special characters that need encoding');
+      } else if (err.message.includes('getaddrinfo ENOTFOUND')) {
+        console.error('🌐 NETWORK ERROR: Cannot resolve MongoDB hostname');
+        console.error('🌐 Current host in URI: cluster0.tqqmdhy.mongodb.net');
+        console.error('🌐 Verify this is the correct host from your Atlas cluster');
+      } else if (err.message.includes('timed out')) {
+        console.error('⏱️ TIMEOUT ERROR: Render cannot reach MongoDB Atlas');
+        console.error('⏱️ This is usually a network/whitelist issue');
+        console.error('⏱️ Make sure Render IP ranges are added to Atlas Network Access:');
+        console.error('⏱️ 74.220.48.0/24');
+        console.error('⏱️ 74.220.56.0/24');
+        console.error('⏱️ Or temporarily add 0.0.0.0/0 for testing');
+      }
+    });
+  
+  // Connection event handlers
+  mongoose.connection.on('connected', () => {
+    console.log('🔌 Mongoose connected event fired');
+  });
+  
+  mongoose.connection.on('error', (err) => {
+    console.error('🔌 Mongoose connection error event:', err.message);
+  });
+  
+  mongoose.connection.on('disconnected', () => {
+    console.log('🔌 Mongoose disconnected event fired');
+  });
+}
+
+console.log('========================================');
+
 // Routes - Authentication
 app.post('/api/register', async (req, res) => {
     try {
@@ -691,15 +782,11 @@ io.on('connection', (socket) => {
     });
 });
 
-// Connect to MongoDB and initialize
-mongoose.connect(process.env.MONGODB_URI)
-    .then(async () => {
-        console.log('Connected to MongoDB');
-        await initRooms();
-    })
-    .catch(err => console.error('MongoDB connection error:', err));
-
+// Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
+    console.log(`========================================`);
     console.log(`✅ Server is running on port ${PORT}`);
+    console.log(`✅ Your app is live at: https://chat-app-6wv8.onrender.com`);
+    console.log(`========================================`);
 });
