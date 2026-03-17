@@ -1,4 +1,4 @@
-κconst socket = io();
+const socket = io();
 let currentUsername = '';
 let currentRoom = 'general';
 let soundEnabled = true;
@@ -19,6 +19,7 @@ fetch('/api/check-auth')
             document.getElementById('userAvatar').src = data.avatar || '/images/default-avatar.svg';
             document.getElementById('userStatus').textContent = data.status;
             
+            // Show admin buttons if user is admin
             if (data.role === 'admin') {
                 document.getElementById('adminBtn').style.display = 'inline-block';
                 document.getElementById('clearAllBtn').style.display = 'inline-block';
@@ -131,45 +132,21 @@ async function loadUsers() {
     displayUsers();
 }
 
-// NEW VERSION: Shows ALL users with online/offline status
 function displayUsers() {
     const usersList = document.getElementById('users-list');
+    const onlineCount = onlineUsers.filter(u => u.isOnline).length;
+    document.getElementById('onlineCount').textContent = onlineCount;
     
-    const onlineUsersList = onlineUsers.filter(u => u.isOnline);
-    const offlineUsersList = onlineUsers.filter(u => !u.isOnline);
-    
-    document.getElementById('onlineCount').textContent = onlineUsersList.length;
-    
-    usersList.innerHTML = `
-        <!-- Online Users -->
-        ${onlineUsersList.map(user => `
-            <div class="user-item online" onclick="startPrivateChat('${user.username}')">
-                <img src="${user.avatar || '/images/default-avatar.svg'}" class="user-avatar" onerror="this.src='/images/default-avatar.svg'">
-                <div class="user-details">
-                    <span class="username">${user.username}</span>
-                    <small class="status-text">${user.customStatus || 'Online'}</small>
-                </div>
-                <span class="online-dot"></span>
+    usersList.innerHTML = onlineUsers.map(user => `
+        <div class="user-item ${user.isOnline ? 'online' : 'offline'}" onclick="startPrivateChat('${user.username}')">
+            <img src="${user.avatar || '/images/default-avatar.svg'}" class="user-avatar" onerror="this.src='/images/default-avatar.svg'">
+            <div class="user-details">
+                <span class="username">${user.username}</span>
+                <small class="status-text">${user.customStatus || user.status}</small>
             </div>
-        `).join('')}
-        
-        ${onlineUsersList.length > 0 && offlineUsersList.length > 0 ? `
-            <div class="offline-divider">
-                <span>OFFLINE (${offlineUsersList.length})</span>
-            </div>
-        ` : ''}
-        
-        <!-- Offline Users -->
-        ${offlineUsersList.map(user => `
-            <div class="user-item offline" onclick="startPrivateChat('${user.username}')">
-                <img src="${user.avatar || '/images/default-avatar.svg'}" class="user-avatar" onerror="this.src='/images/default-avatar.svg'">
-                <div class="user-details">
-                    <span class="username">${user.username}</span>
-                    <small class="status-text">Τελευταία σύνδεση: ${user.lastSeen ? new Date(user.lastSeen).toLocaleDateString('el-GR') : 'Άγνωστο'}</small>
-                </div>
-            </div>
-        `).join('')}
-    `;
+            ${user.isOnline ? '<span class="online-dot"></span>' : ''}
+        </div>
+    `).join('');
 }
 
 // Start private chat
@@ -233,7 +210,6 @@ function addMessage(msg, scroll = true) {
         content = msg.message;
     }
     
-    // Message reactions
     let reactionsHtml = '';
     if (msg.reactions && msg.reactions.length > 0) {
         const reactionCounts = {};
@@ -377,14 +353,13 @@ socket.on('users-online', (users) => {
 
 socket.on('user-joined', ({ username }) => {
     addSystemMessage(`${username} μπήκε στο chat`);
-    loadUsers();
 });
 
 socket.on('user-left', (username) => {
     addSystemMessage(`${username} έφυγε από το chat`);
-    loadUsers();
 });
 
+// System message with sound for join/leave
 function addSystemMessage(text) {
     const messagesDiv = document.getElementById('messages');
     const messageEl = document.createElement('div');
@@ -392,24 +367,139 @@ function addSystemMessage(text) {
     messageEl.textContent = text;
     messagesDiv.appendChild(messageEl);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    // ΠΑΙΞΕ ΗΧΟ ΓΙΑ ΕΙΣΟΔΟ/ΕΞΟΔΟ
+    if (soundEnabled) {
+        if (text.includes('μπήκε')) {
+            playJoinSound();
+        } else if (text.includes('έφυγε')) {
+            playLeaveSound();
+        }
+    }
 }
 
-// Sound
+// Sound - Ωραίος ήχος για νέα μηνύματα
 function playNotificationSound() {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const now = audioContext.currentTime;
+        
+        const masterGain = audioContext.createGain();
+        masterGain.connect(audioContext.destination);
+        masterGain.gain.setValueAtTime(0.3, now);
+        
+        // Τρεις αρμονικές νότες
+        const notes = [
+            { freq: 523.25, time: 0.0, duration: 0.2 }, // C5
+            { freq: 659.25, time: 0.1, duration: 0.2 }, // E5
+            { freq: 783.99, time: 0.2, duration: 0.3 }  // G5
+        ];
+        
+        notes.forEach(note => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = note.freq;
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            gain.gain.setValueAtTime(0, now + note.time);
+            gain.gain.linearRampToValueAtTime(0.25, now + note.time + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + note.time + note.duration);
+            
+            osc.start(now + note.time);
+            osc.stop(now + note.time + note.duration);
+        });
+        
+        // Αρμονική για πλούσιο ήχο
+        const harmonic = audioContext.createOscillator();
+        const harmonicGain = audioContext.createGain();
+        harmonic.type = 'triangle';
+        harmonic.frequency.value = 1046.50;
+        harmonic.connect(harmonicGain);
+        harmonicGain.connect(masterGain);
+        harmonicGain.gain.setValueAtTime(0, now + 0.05);
+        harmonicGain.gain.linearRampToValueAtTime(0.1, now + 0.1);
+        harmonicGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        harmonic.start(now + 0.05);
+        harmonic.stop(now + 0.4);
+        
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    } catch(e) {
+        console.log('Sound error:', e);
+    }
+}
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+// Sound για είσοδο (ανεβαίνει)
+function playJoinSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioContext.currentTime;
+        
+        const masterGain = audioContext.createGain();
+        masterGain.connect(audioContext.destination);
+        masterGain.gain.setValueAtTime(0.2, now);
+        
+        // Ανεβαίνουσα κλίμακα
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            gain.gain.setValueAtTime(0, now + i * 0.1);
+            gain.gain.linearRampToValueAtTime(0.2, now + i * 0.1 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.15);
+            
+            osc.start(now + i * 0.1);
+            osc.stop(now + i * 0.1 + 0.15);
+        });
+        
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+    } catch(e) {
+        console.log('Sound error:', e);
+    }
+}
 
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.1);
-
+// Sound για έξοδο (κατεβαίνει)
+function playLeaveSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioContext.currentTime;
+        
+        const masterGain = audioContext.createGain();
+        masterGain.connect(audioContext.destination);
+        masterGain.gain.setValueAtTime(0.2, now);
+        
+        // Κατεβαίνουσα κλίμακα
+        [783.99, 659.25, 523.25].forEach((freq, i) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            gain.gain.setValueAtTime(0, now + i * 0.1);
+            gain.gain.linearRampToValueAtTime(0.2, now + i * 0.1 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.15);
+            
+            osc.start(now + i * 0.1);
+            osc.stop(now + i * 0.1 + 0.15);
+        });
+        
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
