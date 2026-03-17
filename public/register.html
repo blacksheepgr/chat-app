@@ -3,143 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ΕΓΓΡΑΦΗ | OmniChat</title>
+    <title>Εγγραφή | NEBULA CHAT</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
-            min-height: 100vh;
-            background: linear-gradient(145deg, #0f0f0f 0%, #1a1a1a 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            height: 100vh;
             overflow: hidden;
+            background: #0a0a0a;
+            color: #0f0;
         }
 
-        /* Κομψό abstract background */
-        .background {
-            position: absolute;
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             z-index: 0;
+            opacity: 0.2;
+            pointer-events: none;
         }
 
-        .shape {
-            position: absolute;
-            border-radius: 50%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.05);
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(0,20,0,0.2) 0%, rgba(0,0,0,0.9) 90%);
+            z-index: 1;
+            pointer-events: none;
         }
 
-        .shape-1 {
-            width: 600px;
-            height: 600px;
-            top: -200px;
-            right: -200px;
-        }
-
-        .shape-2 {
-            width: 500px;
-            height: 500px;
-            bottom: -150px;
-            left: -150px;
-        }
-
-        .shape-3 {
-            width: 300px;
-            height: 300px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255,255,255,0.02);
-            border: 2px dashed rgba(255,255,255,0.03);
-        }
-
-        /* Κεντρικό Card */
-        .login-card {
+        .container {
             position: relative;
             z-index: 10;
-            width: 460px;
-            padding: 50px 40px;
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 32px;
-            box-shadow: 
-                0 30px 60px rgba(0, 0, 0, 0.6),
-                0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-                0 0 30px rgba(0, 0, 0, 0.5);
-            transition: transform 0.3s ease;
-        }
-
-        .login-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 
-                0 40px 70px rgba(0, 0, 0, 0.7),
-                0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-        }
-
-        /* Header με logo */
-        .card-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .logo {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            max-width: 440px;
+            margin: 60px auto;
+            padding: 40px 30px;
+            background: rgba(5, 8, 5, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 0, 0.25);
             border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 25px;
             box-shadow: 
-                0 15px 25px rgba(0,0,0,0.5),
-                0 0 0 1px rgba(255,255,255,0.05) inset;
+                0 20px 40px rgba(0,0,0,0.8),
+                0 0 30px rgba(0, 255, 0, 0.2),
+                inset 0 0 20px rgba(0, 255, 0, 0.1);
+            animation: borderPulse 6s infinite alternate;
         }
 
-        .logo i {
-            font-size: 36px;
-            color: rgba(255,255,255,0.9);
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        @keyframes borderPulse {
+            0% { border-color: rgba(0, 255, 0, 0.15); box-shadow: 0 0 20px rgba(0, 255, 0, 0.1); }
+            100% { border-color: rgba(0, 255, 0, 0.4); box-shadow: 0 0 40px rgba(0, 255, 0, 0.3); }
         }
 
-        .card-header h1 {
-            color: rgba(255,255,255,0.95);
-            font-weight: 600;
-            font-size: 28px;
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
+        .glitch-title {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #0f0;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            position: relative;
+            animation: glitchSkew 4s infinite linear;
+            text-shadow: 
+                0 0 5px #0f0,
+                2px 2px 0 #0ff,
+                -2px -2px 0 #f0f;
         }
 
-        .card-header p {
-            color: rgba(255,255,255,0.4);
-            font-size: 15px;
-            font-weight: 400;
+        @keyframes glitchSkew {
+            0%, 100% { transform: skew(0deg, 0deg); }
+            10% { transform: skew(1deg, 0.5deg); filter: hue-rotate(10deg); }
+            20% { transform: skew(-0.5deg, 1deg); filter: hue-rotate(-5deg); }
+            30% { transform: skew(0.8deg, -0.3deg); }
+            40% { transform: skew(-0.3deg, -0.8deg); }
+            50% { transform: skew(0.2deg, 0.5deg); }
+            60% { transform: skew(-0.7deg, 0.2deg); }
         }
 
-        /* Φόρμα */
+        .glitch-title span {
+            display: inline-block;
+            animation: glitchText 0.8s infinite;
+        }
+
+        @keyframes glitchText {
+            0%, 100% { opacity: 1; transform: translate(0,0); }
+            33% { opacity: 0.8; transform: translate(-2px, 1px); color: #0ff; }
+            66% { opacity: 0.9; transform: translate(2px, -1px); color: #f0f; }
+        }
+
         .input-group {
             margin-bottom: 20px;
         }
 
         .input-group label {
             display: block;
-            color: rgba(255,255,255,0.6);
-            font-size: 13px;
-            font-weight: 500;
+            color: #0f0;
+            font-size: 12px;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            opacity: 0.7;
+            text-shadow: 0 0 3px #0f0;
         }
 
         .input-wrapper {
@@ -148,234 +122,254 @@
 
         .input-wrapper i {
             position: absolute;
-            left: 18px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: rgba(255,255,255,0.3);
+            color: #0f0;
             font-size: 18px;
+            opacity: 0.6;
+            text-shadow: 0 0 5px #0f0;
             transition: all 0.3s ease;
-            pointer-events: none;
         }
 
         .input-wrapper input {
             width: 100%;
-            padding: 18px 18px 18px 52px;
-            background: rgba(15, 15, 15, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 18px;
+            padding: 14px 14px 14px 48px;
+            background: rgba(0, 10, 0, 0.7);
+            border: 1px solid #0f0;
+            border-radius: 40px;
             font-size: 15px;
-            color: rgba(255,255,255,0.9);
-            transition: all 0.3s ease;
+            color: #0f0;
+            font-family: 'Share Tech Mono', monospace;
             outline: none;
-            box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
-        }
-
-        .input-wrapper input:focus {
-            border-color: rgba(255, 255, 255, 0.2);
-            background: rgba(20, 20, 20, 0.9);
-            box-shadow: 
-                0 0 0 3px rgba(255,255,255,0.02),
-                inset 0 4px 8px rgba(0,0,0,0.4);
-        }
-
-        .input-wrapper input:focus + i {
-            color: rgba(255,255,255,0.7);
-        }
-
-        .input-wrapper input::placeholder {
-            color: rgba(255,255,255,0.2);
-            font-weight: 300;
-        }
-
-        /* Κουμπί σύνδεσης */
-        .login-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(145deg, #2c2c2c, #1e1e1e);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 24px;
-            color: rgba(255,255,255,0.9);
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 30px;
             box-shadow: 
-                0 15px 25px rgba(0,0,0,0.4),
-                0 0 0 1px rgba(255,255,255,0.02) inset;
-        }
-
-        .login-btn:hover {
-            background: linear-gradient(145deg, #333333, #252525);
-            border-color: rgba(255,255,255,0.1);
-            box-shadow: 
-                0 20px 30px rgba(0,0,0,0.5),
-                0 0 0 1px rgba(255,255,255,0.03) inset;
-            transform: translateY(-2px);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-        }
-
-        /* Σύνδεσμοι */
-        .links {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 25px;
-            font-size: 14px;
-        }
-
-        .links a {
-            color: rgba(255,255,255,0.4);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-weight: 400;
-            border-bottom: 1px dotted transparent;
-        }
-
-        .links a:hover {
-            color: rgba(255,255,255,0.8);
-            border-bottom-color: rgba(255,255,255,0.2);
-        }
-
-        /* Διαχωριστική γραμμή */
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 30px 0 20px;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .divider span {
-            padding: 0 15px;
-            color: rgba(255,255,255,0.25);
-            font-size: 12px;
-            text-transform: uppercase;
+                inset 0 0 10px rgba(0,0,0,0.5),
+                0 0 15px rgba(0, 255, 0, 0.2);
             letter-spacing: 1px;
         }
 
-        /* Σύνδεση με social (αν θες) */
-        .social-login {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
+        .input-wrapper input:focus {
+            border-color: #0f0;
+            box-shadow: 
+                0 0 25px #0f0,
+                inset 0 0 15px rgba(0, 255, 0, 0.3);
+            background: rgba(0, 15, 0, 0.8);
+            transform: scale(1.02);
         }
 
-        .social-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(15, 15, 15, 0.6);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255,255,255,0.4);
-            font-size: 20px;
-            transition: all 0.3s ease;
+        .input-wrapper input:focus + i {
+            opacity: 1;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .input-wrapper input::placeholder {
+            color: rgba(0, 255, 0, 0.25);
+            font-style: italic;
+            letter-spacing: 0.5px;
+        }
+
+        .cyber-btn {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            border: 2px solid #0f0;
+            border-radius: 40px;
+            color: #0f0;
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 4px;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+            font-family: 'Share Tech Mono', monospace;
+            margin-top: 25px;
+            box-shadow: 0 0 20px rgba(0,255,0,0.3);
         }
 
-        .social-btn:hover {
-            background: rgba(30, 30, 30, 0.8);
-            color: rgba(255,255,255,0.9);
-            border-color: rgba(255,255,255,0.1);
-            transform: translateY(-3px);
+        .cyber-btn:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 40px #0f0;
+            text-shadow: 0 0 5px #000;
+            letter-spacing: 6px;
         }
 
-        /* Error message */
+        .cyber-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,0,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .cyber-btn:hover::before {
+            left: 100%;
+        }
+
+        .links {
+            text-align: center;
+            margin: 20px 0 15px;
+            font-size: 13px;
+        }
+
+        .links a {
+            color: rgba(0, 255, 0, 0.6);
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(0,255,0,0.3);
+            padding-bottom: 2px;
+            transition: 0.3s;
+        }
+
+        .links a:hover {
+            color: #0f0;
+            border-bottom-color: #0f0;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        .glitch-text {
+            font-size: 11px;
+            text-align: center;
+            color: rgba(0,255,0,0.3);
+            letter-spacing: 2px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            position: relative;
+        }
+
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.3;
+        }
+
+        .glitch-text::before {
+            color: #f0f;
+            z-index: -1;
+            transform: translate(-2px, -1px);
+        }
+
+        .glitch-text::after {
+            color: #0ff;
+            z-index: -2;
+            transform: translate(2px, 1px);
+        }
+
         .error {
-            color: #ff6b6b;
+            color: #f0f;
             text-align: center;
             margin-top: 20px;
-            padding: 12px;
-            background: rgba(255, 107, 107, 0.05);
-            border: 1px solid rgba(255, 107, 107, 0.2);
-            border-radius: 16px;
-            font-size: 14px;
-            font-weight: 500;
+            padding: 10px;
+            border: 1px solid #f0f;
+            border-radius: 20px;
+            background: rgba(255,0,255,0.05);
+            text-shadow: 0 0 5px #f0f;
             display: none;
+            font-size: 14px;
         }
 
         .error.show {
             display: block;
-            animation: fadeIn 0.3s ease;
+            animation: glitchError 0.3s;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes glitchError {
+            0% { transform: translate(2px, -1px); opacity: 0.5; }
+            20% { transform: translate(-2px, 1px); }
+            40% { transform: translate(1px, -2px); }
+            60% { transform: translate(-1px, 2px); }
+            80% { transform: translate(2px, 1px); }
+            100% { transform: translate(0,0); }
         }
 
-        /* Responsive */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #0f0;
+            box-shadow: 0 0 10px #0f0;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: floatParticle 10s linear infinite;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) scale(1); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+        }
+
         @media (max-width: 500px) {
-            .login-card {
-                width: 90%;
-                padding: 40px 25px;
+            .container {
+                margin: 40px 20px;
+                padding: 30px 20px;
+            }
+            
+            .glitch-title {
+                font-size: 26px;
+                letter-spacing: 4px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="background">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
+    <canvas id="matrixCanvas"></canvas>
+    <div class="overlay"></div>
+    <div id="particles"></div>
 
-    <div class="login-card">
-        <div class="card-header">
-            <div class="logo">
-                <i class="fas fa-comments"></i>
-            </div>
-            <h1>OmniChat</h1>
-            <p>Συνδέσου για να συνομιλήσεις</p>
-        </div>
+    <div class="container">
+        <h1 class="glitch-title">
+            <span>R</span><span>E</span><span>G</span><span>I</span><span>S</span><span>T</span><span>E</span><span>R</span>
+        </h1>
 
-        <form id="loginForm">
+        <form id="registerForm">
             <div class="input-group">
-                <label for="username">Username</label>
+                <label for="username">> USERNAME</label>
                 <div class="input-wrapper">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="username" placeholder="Όνομα χρήστη" required>
+                    <input type="text" id="username" placeholder="CHOOSE YOUR ID" required>
                 </div>
             </div>
 
             <div class="input-group">
-                <label for="password">Password</label>
+                <label for="email">> EMAIL</label>
                 <div class="input-wrapper">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="password" placeholder="Κωδικός πρόσβασης" required>
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" placeholder="ENTER YOUR EMAIL" required>
                 </div>
             </div>
 
-            <button type="submit" class="login-btn">
-                <i class="fas fa-arrow-right-to-bracket" style="margin-right: 8px;"></i> Σύνδεση
+            <div class="input-group">
+                <label for="password">> PASSWORD</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="CREATE ACCESS CODE" required>
+                </div>
+            </div>
+
+            <button type="submit" class="cyber-btn">
+                <i class="fas fa-user-plus" style="margin-right: 8px;"></i> INITIALIZE
             </button>
 
             <div class="links">
-                <a href="register.html">Δεν έχω λογαριασμό</a>
-                <a href="#">Ξέχασα τον κωδικό</a>
+                <a href="login.html">[ BACK TO LOGIN ]</a>
             </div>
 
-            <div class="divider">
-                <span>Ή σύνδεση με</span>
-            </div>
-
-            <div class="social-login">
-                <div class="social-btn"><i class="fab fa-google"></i></div>
-                <div class="social-btn"><i class="fab fa-github"></i></div>
-                <div class="social-btn"><i class="fab fa-discord"></i></div>
+            <div class="glitch-text" data-text="JOIN THE SYSTEM">
+                JOIN THE SYSTEM
             </div>
         </form>
 
@@ -383,49 +377,103 @@
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const matrix = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+        const matrixArray = matrix.split("");
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+
+        const drops = [];
+        for (let x = 0; x < columns; x++) {
+            drops[x] = Math.floor(Math.random() * canvas.height);
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 30);
+
+        function createParticles() {
+            const particlesDiv = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.background = i % 3 === 0 ? '#0f0' : (i % 3 === 1 ? '#f0f' : '#0ff');
+                particle.style.boxShadow = particle.style.background + ' 0 0 10px';
+                particlesDiv.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error');
-            const btn = document.querySelector('.login-btn');
+            const btn = document.querySelector('.cyber-btn');
             
             btn.style.opacity = '0.7';
             btn.style.pointerEvents = 'none';
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Σύνδεση...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> INITIALIZING...';
             
             try {
-                const response = await fetch('/api/login', {
+                const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, email, password })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    btn.style.background = '#2c2c2c';
-                    btn.innerHTML = '<i class="fas fa-check"></i> Επιτυχία!';
+                    btn.style.background = '#0f0';
+                    btn.style.color = '#000';
+                    btn.innerHTML = '<i class="fas fa-check"></i> ACCOUNT CREATED';
                     
                     setTimeout(() => {
-                        window.location.href = '/chat.html';
+                        window.location.href = '/login.html';
                     }, 500);
                 } else {
-                    errorDiv.textContent = data.error || 'Σφάλμα σύνδεσης';
+                    errorDiv.textContent = '> ERROR: ' + (data.error || 'Registration failed');
                     errorDiv.classList.add('show');
                     
                     btn.style.opacity = '1';
                     btn.style.pointerEvents = 'auto';
-                    btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Σύνδεση';
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> INITIALIZE';
                 }
             } catch (err) {
-                errorDiv.textContent = 'Σφάλμα δικτύου';
+                errorDiv.textContent = '> SYSTEM ERROR: Connection failed';
                 errorDiv.classList.add('show');
                 
                 btn.style.opacity = '1';
                 btn.style.pointerEvents = 'auto';
-                btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Σύνδεση';
+                btn.innerHTML = '<i class="fas fa-user-plus"></i> INITIALIZE';
             }
         });
     </script>

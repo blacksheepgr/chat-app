@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Σύνδεση | NEBULA CHAT</title>
+    <title>Σύνδεση | Blackshhep CHAT</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -20,7 +20,6 @@
             color: #0f0;
         }
 
-        /* Canvas για το Matrix background */
         #matrixCanvas {
             position: fixed;
             top: 0;
@@ -32,7 +31,6 @@
             pointer-events: none;
         }
 
-        /* Κύρια overlay με gradient */
         .overlay {
             position: fixed;
             top: 0;
@@ -44,7 +42,6 @@
             pointer-events: none;
         }
 
-        /* Container */
         .container {
             position: relative;
             z-index: 10;
@@ -67,7 +64,6 @@
             100% { border-color: rgba(0, 255, 0, 0.4); box-shadow: 0 0 40px rgba(0, 255, 0, 0.3); }
         }
 
-        /* Glitch effect για τίτλο */
         .glitch-title {
             font-size: 32px;
             font-weight: 700;
@@ -105,7 +101,6 @@
             66% { opacity: 0.9; transform: translate(2px, -1px); color: #f0f; }
         }
 
-        /* Φόρμα */
         .input-group {
             margin-bottom: 25px;
         }
@@ -174,7 +169,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Cyberpunk Button */
         .cyber-btn {
             width: 100%;
             padding: 16px;
@@ -218,7 +212,6 @@
             left: 100%;
         }
 
-        /* Σύνδεσμοι */
         .links {
             display: flex;
             justify-content: space-between;
@@ -240,7 +233,6 @@
             text-shadow: 0 0 5px #0f0;
         }
 
-        /* Glitch text για footer */
         .glitch-text {
             font-size: 11px;
             text-align: center;
@@ -274,7 +266,6 @@
             transform: translate(2px, 1px);
         }
 
-        /* Error message */
         .error {
             color: #f0f;
             text-align: center;
@@ -302,7 +293,6 @@
             100% { transform: translate(0,0); }
         }
 
-        /* Loading particles */
         .particle {
             position: absolute;
             width: 2px;
@@ -323,7 +313,6 @@
             100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
         }
 
-        /* Responsive */
         @media (max-width: 480px) {
             .container {
                 margin: 40px 20px;
@@ -340,13 +329,11 @@
 <body>
     <canvas id="matrixCanvas"></canvas>
     <div class="overlay"></div>
-
-    <!-- Floating particles -->
     <div id="particles"></div>
 
     <div class="container">
         <h1 class="glitch-title">
-            <span>N</span><span>E</span><span>B</span><span>U</span><span>L</span><span>A</span>
+            <span>L</span><span>O</span><span>G</span><span>I</span><span>N</span>
         </h1>
 
         <form id="loginForm">
@@ -384,10 +371,8 @@
     </div>
 
     <script>
-        // Matrix Rain (πιο διακριτικό, πιο γρήγορο)
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
-
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -404,14 +389,12 @@
         function drawMatrix() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
             ctx.fillStyle = '#0f0';
             ctx.font = fontSize + 'px monospace';
 
             for (let i = 0; i < drops.length; i++) {
                 const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
                 if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
                     drops[i] = 0;
                 }
@@ -421,7 +404,6 @@
 
         setInterval(drawMatrix, 30);
 
-        // Floating particles (cyberpunk vibe)
         function createParticles() {
             const particlesDiv = document.getElementById('particles');
             for (let i = 0; i < 30; i++) {
@@ -436,13 +418,11 @@
         }
         createParticles();
 
-        // Resize handler
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         });
 
-        // Login form handler
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
