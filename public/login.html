@@ -3,428 +3,397 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Σύνδεση - Matrix Chat</title>
+    <title>Σύνδεση | OmniChat</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
-            font-family: 'Courier New', monospace;
             min-height: 100vh;
-            background: black;
-            overflow: hidden;
+            background: linear-gradient(145deg, #0f0f0f 0%, #1a1a1a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
+            overflow: hidden;
         }
 
-        /* Matrix Canvas Background */
-        #matrixCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* Κομψό abstract background */
+        .background {
+            position: absolute;
             width: 100%;
             height: 100%;
             z-index: 0;
-            opacity: 0.35;
-            pointer-events: none;
         }
 
-        /* Digital Rain Effect */
-        .matrix-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(0,255,0,0.03) 0%, transparent 70%);
-            z-index: 1;
-            pointer-events: none;
-            animation: pulseGlow 4s ease-in-out infinite;
-        }
-
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
-        }
-
-        /* Main Container */
-        .container {
-            position: relative;
-            z-index: 2;
-            max-width: 420px;
-            margin: 80px auto;
-            padding: 40px;
-            background: rgba(10, 20, 10, 0.85);
-            backdrop-filter: blur(10px);
-            border: 2px solid #00ff00;
-            border-radius: 20px;
-            box-shadow: 
-                0 0 30px rgba(0, 255, 0, 0.3),
-                inset 0 0 20px rgba(0, 255, 0, 0.2);
-            animation: containerPulse 3s ease-in-out infinite;
-        }
-
-        @keyframes containerPulse {
-            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 0, 0.3), inset 0 0 20px rgba(0, 255, 0, 0.2); }
-            50% { box-shadow: 0 0 50px rgba(0, 255, 0, 0.5), inset 0 0 30px rgba(0, 255, 0, 0.3); }
-        }
-
-        /* Glitch Effect for Title */
-        .glitch {
-            font-size: 2.5em;
-            font-weight: bold;
-            text-transform: uppercase;
-            position: relative;
-            text-shadow: 
-                0.05em 0 0 rgba(255,0,0,0.75),
-                -0.05em -0.025em 0 rgba(0,255,255,0.75);
-            animation: glitch 725ms infinite;
-            margin-bottom: 30px;
-            text-align: center;
-            color: #00ff00;
-            letter-spacing: 5px;
-        }
-
-        .glitch span {
+        .shape {
             position: absolute;
-            top: 0;
-            left: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .glitch span:first-child {
-            animation: glitch 500ms infinite;
-            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
-            transform: translate(-0.04em, -0.03em);
-            opacity: 0.75;
+        .shape-1 {
+            width: 600px;
+            height: 600px;
+            top: -200px;
+            right: -200px;
         }
 
-        .glitch span:last-child {
-            animation: glitch 375ms infinite;
-            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
-            transform: translate(0.04em, 0.03em);
-            opacity: 0.75;
+        .shape-2 {
+            width: 500px;
+            height: 500px;
+            bottom: -150px;
+            left: -150px;
         }
 
-        @keyframes glitch {
-            0% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,255,0.75); }
-            14% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,255,0.75); }
-            15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.05em 0 rgba(0,255,255,0.75); }
-            49% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.05em 0 rgba(0,255,255,0.75); }
-            50% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,255,0.75); }
-            99% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,255,0.75); }
-            100% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,255,0.75); }
+        .shape-3 {
+            width: 300px;
+            height: 300px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.02);
+            border: 2px dashed rgba(255,255,255,0.03);
         }
 
-        /* Form Groups */
-        .form-group {
-            margin-bottom: 25px;
+        /* Κεντρικό Card */
+        .login-card {
             position: relative;
+            z-index: 10;
+            width: 460px;
+            padding: 50px 40px;
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+                0 0 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
         }
 
-        label {
-            display: block;
+        .login-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 40px 70px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+        }
+
+        /* Header με logo */
+        .card-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            box-shadow: 
+                0 15px 25px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,255,255,0.05) inset;
+        }
+
+        .logo i {
+            font-size: 36px;
+            color: rgba(255,255,255,0.9);
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        }
+
+        .card-header h1 {
+            color: rgba(255,255,255,0.95);
+            font-weight: 600;
+            font-size: 28px;
+            letter-spacing: -0.5px;
             margin-bottom: 8px;
-            color: #00ff00;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 5px #00ff00;
         }
 
-        /* Cyber Input Fields */
+        .card-header p {
+            color: rgba(255,255,255,0.4);
+            font-size: 15px;
+            font-weight: 400;
+        }
+
+        /* Φόρμα */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
         .input-wrapper {
             position: relative;
-            width: 100%;
         }
 
         .input-wrapper i {
             position: absolute;
-            left: 15px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
-            color: #00ff00;
+            color: rgba(255,255,255,0.3);
             font-size: 18px;
-            text-shadow: 0 0 5px #00ff00;
-            z-index: 1;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 15px 15px 15px 45px;
-            background: rgba(0, 20, 0, 0.7);
-            border: 2px solid #00ff00;
-            border-radius: 10px;
-            font-size: 16px;
-            color: #00ff00;
-            font-family: 'Courier New', monospace;
             transition: all 0.3s ease;
-            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
-        }
-
-        input[type="text"]:focus,
-        input[type="password"]:focus {
-            outline: none;
-            border-color: #00ff00;
-            box-shadow: 
-                0 0 20px rgba(0, 255, 0, 0.5),
-                inset 0 0 15px rgba(0, 255, 0, 0.3);
-            background: rgba(0, 30, 0, 0.8);
-            transform: scale(1.02);
-        }
-
-        input[type="text"]::placeholder,
-        input[type="password"]::placeholder {
-            color: rgba(0, 255, 0, 0.4);
-            font-style: italic;
-        }
-
-        /* Cyber Button */
-        .btn {
-            width: 100%;
-            padding: 15px;
-            background: transparent;
-            border: 2px solid #00ff00;
-            border-radius: 10px;
-            color: #00ff00;
-            font-size: 18px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            font-family: 'Courier New', monospace;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-        }
-
-        .btn:hover {
-            background: #00ff00;
-            color: black;
-            box-shadow: 
-                0 0 30px #00ff00,
-                inset 0 0 15px rgba(0, 0, 0, 0.5);
-            transform: scale(1.02);
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        /* Scanline Effect */
-        .scanline {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                to bottom,
-                transparent 50%,
-                rgba(0, 255, 0, 0.03) 50%
-            );
-            background-size: 100% 4px;
-            z-index: 3;
             pointer-events: none;
-            animation: scanline 8s linear infinite;
         }
 
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(200%); }
+        .input-wrapper input {
+            width: 100%;
+            padding: 18px 18px 18px 52px;
+            background: rgba(15, 15, 15, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            font-size: 15px;
+            color: rgba(255,255,255,0.9);
+            transition: all 0.3s ease;
+            outline: none;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        /* Register Link */
-        .register-link {
-            text-align: center;
-            margin-top: 20px;
-            color: #00ff00;
+        .input-wrapper input:focus {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(20, 20, 20, 0.9);
+            box-shadow: 
+                0 0 0 3px rgba(255,255,255,0.02),
+                inset 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .input-wrapper input:focus + i {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .input-wrapper input::placeholder {
+            color: rgba(255,255,255,0.2);
+            font-weight: 300;
+        }
+
+        /* Κουμπί σύνδεσης */
+        .login-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(145deg, #2c2c2c, #1e1e1e);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 24px;
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            box-shadow: 
+                0 15px 25px rgba(0,0,0,0.4),
+                0 0 0 1px rgba(255,255,255,0.02) inset;
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(145deg, #333333, #252525);
+            border-color: rgba(255,255,255,0.1);
+            box-shadow: 
+                0 20px 30px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,255,255,0.03) inset;
+            transform: translateY(-2px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        /* Σύνδεσμοι */
+        .links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
             font-size: 14px;
         }
 
-        .register-link a {
-            color: #00ff00;
+        .links a {
+            color: rgba(255,255,255,0.4);
             text-decoration: none;
-            border-bottom: 1px solid #00ff00;
-            padding-bottom: 2px;
-            transition: all 0.3s ease;
-            text-shadow: 0 0 5px #00ff00;
+            transition: color 0.3s ease;
+            font-weight: 400;
+            border-bottom: 1px dotted transparent;
         }
 
-        .register-link a:hover {
-            color: #ffffff;
-            border-bottom-color: #ffffff;
-            text-shadow: 0 0 10px #00ff00;
+        .links a:hover {
+            color: rgba(255,255,255,0.8);
+            border-bottom-color: rgba(255,255,255,0.2);
         }
 
-        /* Error Message */
-        .error {
-            color: #ff4444;
+        /* Διαχωριστική γραμμή */
+        .divider {
+            display: flex;
+            align-items: center;
             text-align: center;
-            margin-top: 15px;
-            padding: 10px;
-            border: 1px solid #ff4444;
-            border-radius: 5px;
-            background: rgba(255, 0, 0, 0.1);
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 5px #ff4444;
+            margin: 30px 0 20px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .divider span {
+            padding: 0 15px;
+            color: rgba(255,255,255,0.25);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Σύνδεση με social (αν θες) */
+        .social-login {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .social-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(15, 15, 15, 0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .social-btn:hover {
+            background: rgba(30, 30, 30, 0.8);
+            color: rgba(255,255,255,0.9);
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-3px);
+        }
+
+        /* Error message */
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(255, 107, 107, 0.05);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
             display: none;
         }
 
         .error.show {
             display: block;
-            animation: errorPulse 0.5s ease;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes errorPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* ASCII Art Decoration */
-        .ascii-art {
-            color: #00ff00;
-            font-size: 8px;
-            text-align: center;
-            margin-bottom: 20px;
-            opacity: 0.7;
-            font-family: monospace;
-            white-space: pre;
-            line-height: 1.2;
-            text-shadow: 0 0 3px #00ff00;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Responsive */
-        @media (max-width: 480px) {
-            .container {
-                margin: 40px 20px;
-                padding: 30px 20px;
-            }
-            
-            .glitch {
-                font-size: 1.8em;
+        @media (max-width: 500px) {
+            .login-card {
+                width: 90%;
+                padding: 40px 25px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Matrix Canvas Background -->
-    <canvas id="matrixCanvas"></canvas>
-    <div class="matrix-overlay"></div>
-    <div class="scanline"></div>
-
-    <!-- ASCII Art Header -->
-    <div class="ascii-art">
-        ╔══╗ ╔══╗ ╔╗   ╔══╗ ╔══╗ ╔╗   ╔══╗
-        ║╔╗║ ║╔╗║ ║║   ║╔═╝ ║╔╗║ ║║   ║╔╗║
-        ║╚╝║ ║╚╝║ ║║   ║╚═╗ ║╚╝║ ║║   ║╚╝║
-        ║╔╗║ ║╔╗║ ║║   ╚═╗║ ║╔╗║ ║║   ║╔╗║
-        ║║║║ ║║║║ ║╚═╗ ╔═╝║ ║║║║ ║╚═╗ ║║║║
-        ╚╝╚╝ ╚╝╚╝ ╚══╝ ╚══╝ ╚╝╚╝ ╚══╝ ╚╝╚╝
+    <div class="background">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
     </div>
 
-    <!-- Login Container -->
-    <div class="container">
-        <h1 class="glitch">
-            <span aria-hidden="true">LOGIN</span>
-            LOGIN
-            <span aria-hidden="true">LOGIN</span>
-        </h1>
+    <div class="login-card">
+        <div class="card-header">
+            <div class="logo">
+                <i class="fas fa-comments"></i>
+            </div>
+            <h1>OmniChat</h1>
+            <p>Συνδέσου για να συνομιλήσεις</p>
+        </div>
 
         <form id="loginForm">
-            <div class="form-group">
-                <label for="username">
-                    <i class="fas fa-user"></i> USERNAME
-                </label>
+            <div class="input-group">
+                <label for="username">Username</label>
                 <div class="input-wrapper">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="username" placeholder="Enter your username" required>
+                    <input type="text" id="username" placeholder="Όνομα χρήστη" required>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="password">
-                    <i class="fas fa-lock"></i> PASSWORD
-                </label>
+            <div class="input-group">
+                <label for="password">Password</label>
                 <div class="input-wrapper">
                     <i class="fas fa-lock"></i>
-                    <input type="password" id="password" placeholder="Enter your password" required>
+                    <input type="password" id="password" placeholder="Κωδικός πρόσβασης" required>
                 </div>
             </div>
 
-            <button type="submit" class="btn">
-                <i class="fas fa-sign-in-alt"></i> ACCESS GRANTED
+            <button type="submit" class="login-btn">
+                <i class="fas fa-arrow-right-to-bracket" style="margin-right: 8px;"></i> Σύνδεση
             </button>
-        </form>
 
-        <div class="register-link">
-            <p>UNAUTHORIZED USER? <a href="register.html">INITIALIZE REGISTRATION</a></p>
-        </div>
+            <div class="links">
+                <a href="register.html">Δεν έχω λογαριασμό</a>
+                <a href="#">Ξέχασα τον κωδικό</a>
+            </div>
+
+            <div class="divider">
+                <span>Ή σύνδεση με</span>
+            </div>
+
+            <div class="social-login">
+                <div class="social-btn"><i class="fab fa-google"></i></div>
+                <div class="social-btn"><i class="fab fa-github"></i></div>
+                <div class="social-btn"><i class="fab fa-discord"></i></div>
+            </div>
+        </form>
 
         <div id="error" class="error"></div>
     </div>
 
-    <!-- Matrix Rain Script -->
     <script>
-        // Matrix Rain Effect
-        const canvas = document.getElementById('matrixCanvas');
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+{}[]|;:,.<>?';
-        const fontSize = 16;
-        const columns = canvas.width / fontSize;
-
-        const drops = [];
-        for (let i = 0; i < columns; i++) {
-            drops[i] = Math.floor(Math.random() * -canvas.height);
-        }
-
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#0f0';
-            ctx.font = fontSize + 'px monospace';
-
-            for (let i = 0; i < drops.length; i++) {
-                const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
-
-        setInterval(drawMatrix, 35);
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        // Login Form Handling
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error');
+            const btn = document.querySelector('.login-btn');
             
-            // Cyberpunk loading effect on button
-            const btn = document.querySelector('.btn');
             btn.style.opacity = '0.7';
             btn.style.pointerEvents = 'none';
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> DECRYPTING...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Σύνδεση...';
             
             try {
                 const response = await fetch('/api/login', {
@@ -436,36 +405,27 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Success animation
-                    btn.style.background = '#00ff00';
-                    btn.style.color = 'black';
-                    btn.innerHTML = '<i class="fas fa-check"></i> ACCESS GRANTED';
+                    btn.style.background = '#2c2c2c';
+                    btn.innerHTML = '<i class="fas fa-check"></i> Επιτυχία!';
                     
                     setTimeout(() => {
                         window.location.href = '/chat.html';
                     }, 500);
                 } else {
-                    // Error animation
-                    errorDiv.textContent = '⚠ ' + (data.error || 'ACCESS DENIED') + ' ⚠';
+                    errorDiv.textContent = data.error || 'Σφάλμα σύνδεσης';
                     errorDiv.classList.add('show');
                     
                     btn.style.opacity = '1';
                     btn.style.pointerEvents = 'auto';
-                    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ACCESS GRANTED';
-                    
-                    // Shake effect on error
-                    document.querySelector('.container').style.animation = 'none';
-                    setTimeout(() => {
-                        document.querySelector('.container').style.animation = 'containerPulse 3s ease-in-out infinite';
-                    }, 10);
+                    btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Σύνδεση';
                 }
             } catch (err) {
-                errorDiv.textContent = '⚠ SYSTEM ERROR ⚠';
+                errorDiv.textContent = 'Σφάλμα δικτύου';
                 errorDiv.classList.add('show');
                 
                 btn.style.opacity = '1';
                 btn.style.pointerEvents = 'auto';
-                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ACCESS GRANTED';
+                btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket"></i> Σύνδεση';
             }
         });
     </script>
