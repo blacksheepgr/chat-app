@@ -3,48 +3,469 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Εγγραφή - Chat App</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>EΓΓΡΑΦΗ - Matrix Chat</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            background: black;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Matrix Canvas Background */
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        /* Digital Rain Effect */
+        .matrix-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(0,255,0,0.03) 0%, transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+            animation: pulseGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 420px;
+            margin: 80px auto;
+            padding: 40px;
+            background: rgba(10, 20, 10, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid #00ff00;
+            border-radius: 20px;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 0, 0.3),
+                inset 0 0 20px rgba(0, 255, 0, 0.2);
+            animation: containerPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes containerPulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 0, 0.3), inset 0 0 20px rgba(0, 255, 0, 0.2); }
+            50% { box-shadow: 0 0 50px rgba(0, 255, 0, 0.5), inset 0 0 30px rgba(0, 255, 0, 0.3); }
+        }
+
+        /* Glitch Effect for Title */
+        .glitch {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 
+                0.05em 0 0 rgba(255,0,0,0.75),
+                -0.05em -0.025em 0 rgba(0,255,255,0.75);
+            animation: glitch 725ms infinite;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #00ff00;
+            letter-spacing: 5px;
+        }
+
+        .glitch span {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .glitch span:first-child {
+            animation: glitch 500ms infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+            transform: translate(-0.04em, -0.03em);
+            opacity: 0.75;
+        }
+
+        .glitch span:last-child {
+            animation: glitch 375ms infinite;
+            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+            transform: translate(0.04em, 0.03em);
+            opacity: 0.75;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,255,0.75); }
+            14% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,255,0.75); }
+            15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.05em 0 rgba(0,255,255,0.75); }
+            49% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.05em 0 rgba(0,255,255,0.75); }
+            50% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,255,0.75); }
+            99% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,255,0.75); }
+            100% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,255,0.75); }
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff00;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        /* Cyber Input Fields */
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00ff00;
+            font-size: 18px;
+            text-shadow: 0 0 5px #00ff00;
+            z-index: 1;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            background: rgba(0, 20, 0, 0.7);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            font-size: 16px;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 0, 0.5),
+                inset 0 0 15px rgba(0, 255, 0, 0.3);
+            background: rgba(0, 30, 0, 0.8);
+            transform: scale(1.02);
+        }
+
+        input[type="text"]::placeholder,
+        input[type="password"]::placeholder {
+            color: rgba(0, 255, 0, 0.4);
+            font-style: italic;
+        }
+
+        /* Cyber Button */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            color: #00ff00;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+
+        .btn:hover {
+            background: #00ff00;
+            color: black;
+            box-shadow: 
+                0 0 30px #00ff00,
+                inset 0 0 15px rgba(0, 0, 0, 0.5);
+            transform: scale(1.02);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Scanline Effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 255, 0, 0.03) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 3;
+            pointer-events: none;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(200%); }
+        }
+
+        /* Register Link */
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #00ff00;
+            font-size: 14px;
+        }
+
+        .register-link a {
+            color: #00ff00;
+            text-decoration: none;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 2px;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .register-link a:hover {
+            color: #ffffff;
+            border-bottom-color: #ffffff;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        /* Error Message */
+        .error {
+            color: #ff4444;
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #ff4444;
+            border-radius: 5px;
+            background: rgba(255, 0, 0, 0.1);
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 5px #ff4444;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+            animation: errorPulse 0.5s ease;
+        }
+
+        @keyframes errorPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ASCII Art Decoration */
+        .ascii-art {
+            color: #00ff00;
+            font-size: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            opacity: 0.7;
+            font-family: monospace;
+            white-space: pre;
+            line-height: 1.2;
+            text-shadow: 0 0 3px #00ff00;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                margin: 40px 20px;
+                padding: 30px 20px;
+            }
+            
+            .glitch {
+                font-size: 1.8em;
+            }
+        }
+    </style>
 </head>
 <body>
+    <!-- Matrix Canvas Background -->
+    <canvas id="matrixCanvas"></canvas>
+    <div class="matrix-overlay"></div>
+    <div class="scanline"></div>
+
+    <!-- ASCII Art Header -->
+    <div class="ascii-art">
+        ╔══╗ ╔══╗ ╔╗   ╔══╗ ╔══╗ ╔╗   ╔══╗
+        ║╔╗║ ║╔╗║ ║║   ║╔═╝ ║╔╗║ ║║   ║╔╗║
+        ║╚╝║ ║╚╝║ ║║   ║╚═╗ ║╚╝║ ║║   ║╚╝║
+        ║╔╗║ ║╔╗║ ║║   ╚═╗║ ║╔╗║ ║║   ║╔╗║
+        ║║║║ ║║║║ ║╚═╗ ╔═╝║ ║║║║ ║╚═╗ ║║║║
+        ╚╝╚╝ ╚╝╚╝ ╚══╝ ╚══╝ ╚╝╚╝ ╚══╝ ╚╝╚╝
+    </div>
+
+    <!-- Login Container -->
     <div class="container">
-        <h1><i class="fas fa-user-plus"></i> Εγγραφή</h1>
-        <form id="registerForm">
+        <h1 class="glitch">
+            <span aria-hidden="true">LOGIN</span>
+            LOGIN
+            <span aria-hidden="true">LOGIN</span>
+        </h1>
+
+        <form id="loginForm">
             <div class="form-group">
-                <label for="username"><i class="fas fa-user"></i> Username:</label>
-                <input type="text" id="username" required>
+                <label for="username">
+                    <i class="fas fa-user"></i> USERNAME
+                </label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
             </div>
+
             <div class="form-group">
-                <label for="email"><i class="fas fa-envelope"></i> Email:</label>
-                <input type="email" id="email" required>
+                <label for="password">
+                    <i class="fas fa-lock"></i> PASSWORD
+                </label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="password"><i class="fas fa-lock"></i> Password:</label>
-                <input type="password" id="password" required>
-            </div>
-            <button type="submit" class="btn"><i class="fas fa-user-plus"></i> Εγγραφή</button>
+
+            <button type="submit" class="btn">
+                <i class="fas fa-sign-in-alt"></i> ACCESS GRANTED
+            </button>
         </form>
-        <p>Έχεις λογαριασμό; <a href="login.html">Σύνδεση</a></p>
+
+        <div class="register-link">
+            <p>UNAUTHORIZED USER? <a href="register.html">INITIALIZE REGISTRATION</a></p>
+        </div>
+
         <div id="error" class="error"></div>
     </div>
+
+    <!-- Matrix Rain Script -->
     <script>
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        // Matrix Rain Effect
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+{}[]|;:,.<>?';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.floor(Math.random() * -canvas.height);
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 35);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Login Form Handling
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const response = await fetch('/api/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: document.getElementById('username').value,
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
-                })
-            });
-            const data = await response.json();
-            if (data.success) {
-                window.location.href = '/chat.html';
-            } else {
-                document.getElementById('error').textContent = data.error;
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error');
+            
+            // Cyberpunk loading effect on button
+            const btn = document.querySelector('.btn');
+            btn.style.opacity = '0.7';
+            btn.style.pointerEvents = 'none';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> DECRYPTING...';
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Success animation
+                    btn.style.background = '#00ff00';
+                    btn.style.color = 'black';
+                    btn.innerHTML = '<i class="fas fa-check"></i> ACCESS GRANTED';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/chat.html';
+                    }, 500);
+                } else {
+                    // Error animation
+                    errorDiv.textContent = '⚠ ' + (data.error || 'ACCESS DENIED') + ' ⚠';
+                    errorDiv.classList.add('show');
+                    
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ACCESS GRANTED';
+                    
+                    // Shake effect on error
+                    document.querySelector('.container').style.animation = 'none';
+                    setTimeout(() => {
+                        document.querySelector('.container').style.animation = 'containerPulse 3s ease-in-out infinite';
+                    }, 10);
+                }
+            } catch (err) {
+                errorDiv.textContent = '⚠ SYSTEM ERROR ⚠';
+                errorDiv.classList.add('show');
+                
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ACCESS GRANTED';
             }
         });
     </script>
