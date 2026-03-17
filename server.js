@@ -16,7 +16,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-// Ensure upload directories exist
+// Ensure upload directories exist (προσωρινά)
 fs.ensureDirSync(path.join(__dirname, 'public/uploads/avatars'));
 fs.ensureDirSync(path.join(__dirname, 'public/uploads/files'));
 
@@ -26,7 +26,7 @@ app.use(express.static('public'));
 app.use('/uploads', express.static('public/uploads'));
 app.use(cookieParser());
 
-// Multer configuration
+// Multer configuration (μόνο για προσωρινή αποθήκευση)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         if (file.fieldname === 'avatar') {
@@ -58,12 +58,26 @@ const upload = multer({
     }
 });
 
-// MongoDB Schemas
+// ============================================
+// MONGODB SCHEMAS
+// ============================================
+
+// Avatar Schema for GridFS
+const avatarSchema = new mongoose.Schema({
+    filename: String,
+    contentType: String,
+    data: Buffer,
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    uploadedAt: { type: Date, default: Date.now }
+});
+
+const Avatar = mongoose.model('Avatar', avatarSchema);
+
 const userSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
     email: { type: String, unique: true, sparse: true },
-    avatar: { type: String, default: '/images/default-avatar.svg' },
+    avatarId: { type: mongoose.Schema.Types.ObjectId, ref: 'Avatar', default: null },
     status: { type: String, default: 'available' },
     customStatus: { type: String, default: '' },
     role: { type: String, default: 'user', enum: ['user', 'admin', 'moderator'] },
@@ -110,19 +124,87 @@ const User = mongoose.model('User', userSchema);
 const Message = mongoose.model('Message', messageSchema);
 const Room = mongoose.model('Room', roomSchema);
 
-// Initialize default rooms
+// ============================================
+// MONGODB CONNECTION
+// ============================================
+
+console.log('========================================');
+console.log('🚀 Starting Chat Application...');
+console.log('========================================');
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('❌❌❌ CRITICAL ERROR: MONGODB_URI is not defined in environment variables!');
+} else {
+  const sanitizedURI = MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
+  console.log('✅ MONGODB_URI found:', sanitizedURI);
+  
+  mongoose.set('bufferCommands', false);
+  mongoose.set('bufferTimeoutMS', 10000);
+  
+  const connectionOptions = {
+    serverSelectionTimeoutMS: 15000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 15000,
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    retryWrites: true,
+    retryReads: true,
+  };
+  
+  console.log('🔄 Attempting to connect to MongoDB Atlas...');
+  
+  mongoose.connect(MONGODB_URI, connectionOptions)
+    .then(() => {
+      console.log('✅✅✅ SUCCESS! Connected to MongoDB Atlas! ✅✅✅');
+      console.log('📊 Database:', mongoose.connection.name);
+      initRooms();
+    })
+    .catch(err => {
+      console.error('❌❌❌ MongoDB connection error ❌❌❌');
+      console.error('Error message:', err.message);
+    });
+  
+  mongoose.connection.on('connected', () => {
+    console.log('🔌 Mongoose connected event fired');
+  });
+  
+  mongoose.connection.on('error', (err) => {
+    console.error('🔌 Mongoose connection error event:', err.message);
+  });
+  
+  mongoose.connection.on('disconnected', () => {
+    console.log('🔌 Mongoose disconnected event fired');
+  });
+}
+
+console.log('========================================');
+
+// ============================================
+// INITIALIZE DEFAULT ROOMS
+// ============================================
+
 async function initRooms() {
-    const rooms = ['general', 'random', 'tech', 'gaming'];
-    for (const room of rooms) {
-        await Room.findOneAndUpdate(
-            { name: room },
-            { name: room, description: `Welcome to ${room} room!`, createdBy: 'system' },
-            { upsert: true }
-        );
+    try {
+        const rooms = ['general', 'random', 'tech', 'gaming'];
+        for (const room of rooms) {
+            await Room.findOneAndUpdate(
+                { name: room },
+                { name: room, description: `Welcome to ${room} room!`, createdBy: 'system' },
+                { upsert: true }
+            );
+        }
+        console.log('✅ Default rooms initialized');
+    } catch (error) {
+        console.error('❌ Error initializing rooms:', error.message);
     }
 }
 
-// Authentication middleware
+// ============================================
+// AUTHENTICATION MIDDLEWARE
+// ============================================
+
 const authenticateToken = async (req, res, next) => {
     const token = req.cookies.token;
     if (!token) return res.redirect('/login.html');
@@ -147,97 +229,9 @@ const requireAdmin = async (req, res, next) => {
 };
 
 // ============================================
-// MONGODB CONNECTION - FIXED VERSION
+// AUTH ROUTES
 // ============================================
 
-console.log('========================================');
-console.log('🚀 Starting Chat Application...');
-console.log('========================================');
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  console.error('❌❌❌ CRITICAL ERROR: MONGODB_URI is not defined in environment variables!');
-  console.error('❌❌❌ Please add MONGODB_URI to your Render environment variables.');
-  console.error('❌❌❌ The application will not work without a database connection.');
-} else {
-  // Hide password in logs for security
-  const sanitizedURI = MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
-  console.log('✅ MONGODB_URI found:', sanitizedURI);
-  
-  // Disable command buffering completely - THIS FIXES THE TIMEOUT ISSUE
-  mongoose.set('bufferCommands', false);
-  mongoose.set('bufferTimeoutMS', 10000);
-  
-  // Connection options
-  const connectionOptions = {
-    serverSelectionTimeoutMS: 15000, // Timeout after 15 seconds
-    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-    connectTimeoutMS: 15000,
-    maxPoolSize: 10,
-    minPoolSize: 2,
-    retryWrites: true,
-    retryReads: true,
-  };
-  
-  console.log('🔄 Attempting to connect to MongoDB Atlas...');
-  
-  // Connect to MongoDB
-  mongoose.connect(MONGODB_URI, connectionOptions)
-    .then(() => {
-      console.log('✅✅✅ SUCCESS! Connected to MongoDB Atlas! ✅✅✅');
-      console.log('📊 Database:', mongoose.connection.name);
-      console.log('🌐 Host:', mongoose.connection.host);
-      
-      // Initialize rooms after successful connection
-      initRooms().then(() => {
-        console.log('✅ Default rooms initialized');
-      }).catch(err => {
-        console.error('❌ Error initializing rooms:', err.message);
-      });
-    })
-    .catch(err => {
-      console.error('❌❌❌ MongoDB connection error ❌❌❌');
-      console.error('Error name:', err.name);
-      console.error('Error message:', err.message);
-      
-      // Check for common errors
-      if (err.message.includes('authentication failed')) {
-        console.error('🔑 AUTHENTICATION ERROR: Username or password is incorrect in MONGODB_URI');
-        console.error('🔑 Current username in URI: georgepalathens_db_user');
-        console.error('🔑 Make sure the password in the connection string matches exactly');
-        console.error('🔑 Password should NOT contain any special characters that need encoding');
-      } else if (err.message.includes('getaddrinfo ENOTFOUND')) {
-        console.error('🌐 NETWORK ERROR: Cannot resolve MongoDB hostname');
-        console.error('🌐 Current host in URI: cluster0.tqqmdhy.mongodb.net');
-        console.error('🌐 Verify this is the correct host from your Atlas cluster');
-      } else if (err.message.includes('timed out')) {
-        console.error('⏱️ TIMEOUT ERROR: Render cannot reach MongoDB Atlas');
-        console.error('⏱️ This is usually a network/whitelist issue');
-        console.error('⏱️ Make sure Render IP ranges are added to Atlas Network Access:');
-        console.error('⏱️ 74.220.48.0/24');
-        console.error('⏱️ 74.220.56.0/24');
-        console.error('⏱️ Or temporarily add 0.0.0.0/0 for testing');
-      }
-    });
-  
-  // Connection event handlers
-  mongoose.connection.on('connected', () => {
-    console.log('🔌 Mongoose connected event fired');
-  });
-  
-  mongoose.connection.on('error', (err) => {
-    console.error('🔌 Mongoose connection error event:', err.message);
-  });
-  
-  mongoose.connection.on('disconnected', () => {
-    console.log('🔌 Mongoose disconnected event fired');
-  });
-}
-
-console.log('========================================');
-
-// Routes - Authentication
 app.post('/api/register', async (req, res) => {
     try {
         const { username, password, email } = req.body;
@@ -299,56 +293,94 @@ app.post('/api/logout', authenticateToken, async (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/check-auth', authenticateToken, (req, res) => {
-    res.json({ 
-        authenticated: true, 
-        username: req.user.username,
-        role: req.user.role,
-        avatar: req.user.avatar,
-        status: req.user.status,
-        customStatus: req.user.customStatus
-    });
+app.get('/api/check-auth', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        
+        res.json({ 
+            authenticated: true, 
+            username: user.username,
+            role: user.role,
+            avatar: user.avatarId ? `/api/avatar/${user.avatarId}` : '/images/default-avatar.svg',
+            status: user.status,
+            customStatus: user.customStatus
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// Profile update
+// ============================================
+// AVATAR ROUTES (MongoDB Storage)
+// ============================================
+
 app.post('/api/profile/update', authenticateToken, upload.single('avatar'), async (req, res) => {
     try {
         const { status, customStatus } = req.body;
         const updateData = { status, customStatus };
         
         if (req.file) {
-            const filename = `avatar-${req.user._id}-${Date.now()}.jpg`;
-            await sharp(req.file.path)
-                .resize(200, 200)
-                .jpeg({ quality: 80 })
-                .toFile(path.join(__dirname, 'public/uploads/avatars/', filename));
+            const fileData = fs.readFileSync(req.file.path);
             
-            if (req.user.avatar && req.user.avatar !== '/images/default-avatar.svg') {
-                const oldPath = path.join(__dirname, 'public', req.user.avatar);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+            const newAvatar = new Avatar({
+                filename: req.file.originalname,
+                contentType: req.file.mimetype,
+                data: fileData,
+                userId: req.user._id
+            });
+            
+            await newAvatar.save();
+            
+            if (req.user.avatarId) {
+                await Avatar.findByIdAndDelete(req.user.avatarId);
             }
             
-            updateData.avatar = '/uploads/avatars/' + filename;
+            fs.unlinkSync(req.file.path);
+            
+            updateData.avatarId = newAvatar._id;
         }
         
         await User.findByIdAndUpdate(req.user._id, updateData);
         
+        let avatarUrl = '/images/default-avatar.svg';
+        if (updateData.avatarId) {
+            avatarUrl = `/api/avatar/${updateData.avatarId}`;
+        } else if (req.user.avatarId) {
+            avatarUrl = `/api/avatar/${req.user.avatarId}`;
+        }
+        
         io.emit('user-updated', {
             username: req.user.username,
-            avatar: updateData.avatar || req.user.avatar,
+            avatar: avatarUrl,
             status: updateData.status || req.user.status,
             customStatus: updateData.customStatus || req.user.customStatus
         });
         
-        res.json({ success: true, avatar: updateData.avatar });
+        res.json({ success: true, avatar: avatarUrl });
     } catch (error) {
+        console.error('Profile update error:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// File upload
+app.get('/api/avatar/:id', async (req, res) => {
+    try {
+        const avatar = await Avatar.findById(req.params.id);
+        if (!avatar) {
+            return res.sendFile(path.join(__dirname, 'public/images/default-avatar.svg'));
+        }
+        
+        res.contentType(avatar.contentType);
+        res.send(avatar.data);
+    } catch (error) {
+        res.sendFile(path.join(__dirname, 'public/images/default-avatar.svg'));
+    }
+});
+
+// ============================================
+// FILE UPLOAD (για μηνύματα)
+// ============================================
+
 app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
@@ -370,17 +402,34 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
     }
 });
 
-// Get users list
+// ============================================
+// USER ROUTES
+// ============================================
+
 app.get('/api/users', authenticateToken, async (req, res) => {
     try {
-        const users = await User.find({}, 'username avatar status customStatus isOnline lastSeen role');
-        res.json(users);
+        const users = await User.find({}, 'username status customStatus isOnline lastSeen role avatarId');
+        
+        const usersWithAvatars = users.map(user => ({
+            username: user.username,
+            status: user.status,
+            customStatus: user.customStatus,
+            isOnline: user.isOnline,
+            lastSeen: user.lastSeen,
+            role: user.role,
+            avatar: user.avatarId ? `/api/avatar/${user.avatarId}` : '/images/default-avatar.svg'
+        }));
+        
+        res.json(usersWithAvatars);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Get rooms
+// ============================================
+// ROOM ROUTES
+// ============================================
+
 app.get('/api/rooms', authenticateToken, async (req, res) => {
     try {
         const rooms = await Room.find({ $or: [{ isPrivate: false }, { members: req.user.username }] });
@@ -390,7 +439,6 @@ app.get('/api/rooms', authenticateToken, async (req, res) => {
     }
 });
 
-// Create room
 app.post('/api/rooms', authenticateToken, async (req, res) => {
     try {
         const { name, description, isPrivate, password } = req.body;
@@ -418,7 +466,6 @@ app.post('/api/rooms', authenticateToken, async (req, res) => {
     }
 });
 
-// Join private room
 app.post('/api/rooms/join', authenticateToken, async (req, res) => {
     try {
         const { name, password } = req.body;
@@ -446,7 +493,10 @@ app.post('/api/rooms/join', authenticateToken, async (req, res) => {
     }
 });
 
-// Get message history
+// ============================================
+// MESSAGE ROUTES
+// ============================================
+
 app.get('/api/messages/:room', authenticateToken, async (req, res) => {
     try {
         const { room } = req.params;
@@ -478,7 +528,6 @@ app.get('/api/messages/:room', authenticateToken, async (req, res) => {
     }
 });
 
-// Get private messages
 app.get('/api/private/:user', authenticateToken, async (req, res) => {
     try {
         const { user } = req.params;
@@ -502,7 +551,6 @@ app.get('/api/private/:user', authenticateToken, async (req, res) => {
     }
 });
 
-// Edit message
 app.put('/api/messages/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -529,7 +577,6 @@ app.put('/api/messages/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Delete message
 app.delete('/api/messages/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -553,7 +600,6 @@ app.delete('/api/messages/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Add reaction
 app.post('/api/messages/:id/reactions', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -579,7 +625,10 @@ app.post('/api/messages/:id/reactions', authenticateToken, async (req, res) => {
     }
 });
 
-// Admin: Clear all messages
+// ============================================
+// ADMIN ROUTES
+// ============================================
+
 app.post('/api/admin/clear-all-messages', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -601,7 +650,6 @@ app.post('/api/admin/clear-all-messages', authenticateToken, requireAdmin, async
     }
 });
 
-// Admin routes
 app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
@@ -662,6 +710,10 @@ app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, 
     }
 });
 
+// ============================================
+// STATIC PAGES
+// ============================================
+
 app.get('/chat.html', authenticateToken, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
@@ -670,7 +722,10 @@ app.get('/admin.html', authenticateToken, requireAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Socket.IO
+// ============================================
+// SOCKET.IO
+// ============================================
+
 const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
@@ -708,6 +763,11 @@ io.on('connection', (socket) => {
     socket.on('message', async (data) => {
         const { username, message, room = 'general', privateTo = null, fileData = null } = data;
         const user = await User.findOne({ username });
+        
+        if (!user) {
+            console.log(`⚠️ User ${username} not found in database, skipping message`);
+            return;
+        }
         
         let messageData = {
             username,
@@ -782,7 +842,10 @@ io.on('connection', (socket) => {
     });
 });
 
-// Start server
+// ============================================
+// START SERVER
+// ============================================
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`========================================`);
